@@ -47,20 +47,17 @@ def load_results_file(fname, fields_cnt):
         file_idx += 1
     return results
 
-
-# 20161121: at repetition 166
-max_reps = 5 #165
+# Define range of repetitions to grab
+rep_start = 0
+max_reps = 160
 fields_cnt = 5
 
-
 found_cnt = 7 # this is for id22
-results = np.zeros((max_reps, found_cnt, fields_cnt))
-
 
 in_data_path = 'genwqe_comparison_results_hw_repetitions'
 fname_pattern = 'compress_comparison_results_id22_rep.{0}.txt'
 
-rep_start = 0
+results = np.zeros((max_reps, found_cnt, fields_cnt))
 for rep_idx in range(rep_start, max_reps):
     # file names with repetition starting from 1...
     fname = 'compress_comparison_results_id22_rep.{0}.txt'.format(rep_idx+1)
