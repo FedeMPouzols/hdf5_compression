@@ -15,11 +15,6 @@ RAM_DISK_MPOINT=/home/fedemp/
 RAM_DISK=${RAM_DISK_MPOINT}ramdisk_150GB
 
 
-
-FILES_DIR=$1
-FILES_LIST=$2
-
-
 gzip_disk_disk() {
     ${GZIP_BIN} < $1 > $2
 }
@@ -79,8 +74,30 @@ compress_compare() {
     OUT_SUMMARY="${OUT_SUMMARY}\n${summary_line}"
 }
 
+FILES_DIR=$1
+FILES_LIST=$2
+
+if [ "$#" -ne 2 ]; then
+    echo "Usage: $0 INPUT_DATA_DIRECTORY LIST_INPUT_FILES" >&2
+    exit 1
+fi
+
+if [ -z "$FILES_DIR" ] || ! [ -d "${FILES_DIR}" ]; then
+    echo "First argument: provide a valid directory for input data files"
+    exit 1
+fi
+
+if [ -z "${FILES_LIST}" ] || ! [ -f "${FILES_LIST}" ]; then
+    echo "Second argument: provide a valid file with a list of input files"
+    exit 1
+fi
+
+echo "Using data from directory: ${1}, list of files: ${2}"
 
 STARTTIME=$(date +%s)
+
+echo "* Start time: $(date)"
+echo "* ppc64 SMT: $(ppc64_cpu --smt)"
 
 while read file
 do
