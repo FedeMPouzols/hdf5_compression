@@ -128,7 +128,8 @@ packages are installed ion p8.desy.de.
 
 **TODO**
 
-* The data files downloaded are availble under p8.desy.de:/**TODO**.
+* The data files downloaded from the [CXIDB](http://cxidb.org) are
+  availble under p8.desy.de:/**TODO**.
 
 
 ### Using environment variables
@@ -241,7 +242,12 @@ package](http://docs.h5py.org/en/latest/high/dataset.html#filter-pipeline).
 
 #### Inspecting the data (images) in HDF5 files converted from XTC/LCLS raw data files
 
-[`example_plot_hdf5_xtc_lcls.py`](example_plot_hdf5_xtc_lcls.py)
+The structure of these HDF5 can vary. Exploring them with an
+interactive Python interpreter and h5py is a convenient alternative,
+in addition to the traditional HDF5 tools and helpers. A simple
+example that retrieves some groups and datasets and plots some images
+can be found in
+[`example_plot_hdf5_xtc_lcls.py`](example_plot_hdf5_xtc_lcls.py).
 
 #### Data in CXI (HDF5) files
 
@@ -263,120 +269,6 @@ file is ~12.0 with standard software GZIP, and ~7.15 with accelerated
 compression. Note that the file contains easily compressible
 information such as image masks.
 
-## Performance considerations
-
-### CPU load
-
-A concern, especially with non-CAPI FPGA accelerators, is that the CPU
-load could be high for some datasets, compromising the performance or
-throughput of the accelerator. In principle , in the tests provided
-with the [genwqe-user
-software](https://github.com/ibm-genwqe/genwqe-user) or the tests done
-with [CXIDB](http://cxidb.org) raw data files.
-
-Screenshots [p8_screenshot_htop](p8_screenshot_htop.png) and
-[p8_screenshot_htop_2](p8_screenshot_htop_2.png)
-
-Note that an additional factor with a (lesser) influence on the
-compression ratio is the HDF (chunk
-size)[https://support.hdfgroup.org/HDF5/doc/Advanced/Chunking/]
-
-
-### Power8 hyperthreading
-
-The tool `ppc64_cpu` to setup Simultaneous multithreading (SMT) /
-Hyperthreading. Power8 has SMT 8 per core.
-
-
-Example:
-```
-% ppc64_cpu --help
-Usage: ppc64_cpu [command] [options]
-ppc64_cpu --smt                     # Get current SMT state
-ppc64_cpu --smt={on|off}            # Turn SMT on/off
-ppc64_cpu --smt=X                   # Set SMT state to X
-
-ppc64_cpu --cores-present           # Get the number of cores present
-ppc64_cpu --cores-on                # Get the number of cores currently online
-ppc64_cpu --cores-on=X              # Put exactly X cores online
-
-ppc64_cpu --dscr                    # Get current DSCR system setting
-ppc64_cpu --dscr=<val>              # Change DSCR system setting
-ppc64_cpu --dscr [-p <pid>]         # Get DSCR setting for process <pid>
-ppc64_cpu --dscr=<val> [-p <pid>]   # Change DSCR setting for process <pid>
-
-ppc64_cpu --smt-snooze-delay        # Get current smt-snooze-delay setting
-ppc64_cpu --smt-snooze-delay=<val>  # Change smt-snooze-delay setting
-
-ppc64_cpu --run-mode                # Get current diagnostics run mode
-ppc64_cpu --run-mode=<val>          # Set current diagnostics run mode
-
-ppc64_cpu --frequency [-t <time>]   # Determine cpu frequency for <time>
-                                    # seconds, default is 1 second.
-
-ppc64_cpu --subcores-per-core       # Get number of subcores per core
-ppc64_cpu --subcores-per-core=X     # Set subcores per core to X (1 or 4)
-ppc64_cpu --threads-per-core        # Get threads per core
-ppc64_cpu --info                    # Display system state information)
-
-```
-
-Currently on `p8.desy.de` the default is `smt==8` (and that status is
-reset on reboot). This produces 160 processors if you check
-`lscpu`, `/proc/cpuinfo`, `top`, `htop` or similar. With hyperthreading
-disabled (`smt=off`) there are 20 processors.
-
-
-```
-% ppc64 --help
-
-Usage:
- ppc64 [options] [program [program arguments]]
-
-Options:
- -v, --verbose            says what options are being switched on
- -R, --addr-no-randomize  disables randomization of the virtual address space
- -F, --fdpic-funcptrs     makes function pointers point to descriptors
- -Z, --mmap-page-zero     turns on MMAP_PAGE_ZERO
- -L, --addr-compat-layout changes the way virtual memory is allocated
- -X, --read-implies-exec  turns on READ_IMPLIES_EXEC
- -B, --32bit              turns on ADDR_LIMIT_32BIT
- -I, --short-inode        turns on SHORT_INODE
- -S, --whole-seconds      turns on WHOLE_SECONDS
- -T, --sticky-timeouts    turns on STICKY_TIMEOUTS
- -3, --3gb                limits the used address space to a maximum of 3 GB
-     --4gb                ignored (for backward compatibility only)
-     --uname-2.6          turns on UNAME26
-     --list               list settable architectures, and exit
-
- -h, --help     display this help and exit
- -V, --version  output version information and exit
-
-For more details see setarch(8).
-
-```
-
-### Number of threads
-
-Approximately in the range [0.8, 1.1] GByte/s with a single thread.
-
-With multiple threads or processes approximately in the range [] (half
-for each when using two threads). Two threads are enough to reach this
-performance in terms of throughput, and adding more threads does not
-seem to produce any increase in total throughput.
-
-In agreement with slide 11 of CAPI_GENWQE-GZIP_for_DESY.pdf, although
-with some performance degradation especially for XTC files with a low
-compression ratio.
-
-### Buffer size
-
-For low compresion ratio data throughput does not seem to increase
-much even for very large buffer sizes
-
-(compare with slide 15 of CAPI_GENWQE-GZIP_for_DESY.pdf).
-
-The behavior with CAPI remains to be tested.
 
 ## Running tests
 
@@ -494,8 +386,104 @@ processed simultaneously, see the following examples:
 
 #  ~95 GB - cxidb/id22/e239-r0028-s00-c00.xtc
 /usr/bin/time -f '%e %U %S' /usr/lib64/genwqe/gzip   < cxidb/id22/e239-r0028-s00-c00.xtc > ~/ramdisk_150GB/comp.gz & /usr/bin/time -f '%e %U %S' /usr/lib64/genwqe/gzip  < cxidb/id22/e239-r0028-s00-c00.xtc > ~/ramdisk_150GB/comp2.gz &
-```
+
 # ~56 GB - cxidb/id22/e239-r0028-s00-c01.xtc
 /usr/bin/time -f '%e %U %S' /usr/lib64/genwqe/gzip   < cxidb/id22/e239-r0028-s00-c01.xtc > ~/ramdisk_150GB/comp.gz & /usr/bin/time -f '%e %U %S' /usr/lib64/genwqe/gzip  < cxidb/id22/e239-r0028-s00-c01.xtc > ~/ramdisk_150GB/comp2.gz &
 ```
 
+
+## Performance considerations
+
+### CPU load
+
+A concern, especially with non-CAPI FPGA accelerators, is that the CPU
+load could be high for some datasets, compromising the performance or
+throughput of the accelerator. In principle , in the tests provided
+with the [genwqe-user
+software](https://github.com/ibm-genwqe/genwqe-user) or the tests done
+with [CXIDB](http://cxidb.org) raw data files.
+
+Screenshots [p8_screenshot_htop](p8_screenshot_htop.png) and
+[p8_screenshot_htop_2](p8_screenshot_htop_2.png)
+
+Note that an additional factor with a (lesser) influence on the
+compression ratio is the HDF (chunk
+size)[https://support.hdfgroup.org/HDF5/doc/Advanced/Chunking/]
+
+
+### Power8 hyperthreading
+
+The command line tool `ppc64_cpu` can be used to setup Simultaneous
+multithreading (SMT) / Hyperthreading on Power8 systems. Power8 has a
+SMT capability of 8 threads per core. Example help output from the
+tool:
+
+```
+% ppc64_cpu --help
+Usage: ppc64_cpu [command] [options]
+ppc64_cpu --smt                     # Get current SMT state
+ppc64_cpu --smt={on|off}            # Turn SMT on/off
+ppc64_cpu --smt=X                   # Set SMT state to X
+
+ppc64_cpu --cores-present           # Get the number of cores present
+ppc64_cpu --cores-on                # Get the number of cores currently online
+ppc64_cpu --cores-on=X              # Put exactly X cores online
+
+ppc64_cpu --dscr                    # Get current DSCR system setting
+ppc64_cpu --dscr=<val>              # Change DSCR system setting
+ppc64_cpu --dscr [-p <pid>]         # Get DSCR setting for process <pid>
+ppc64_cpu --dscr=<val> [-p <pid>]   # Change DSCR setting for process <pid>
+
+ppc64_cpu --smt-snooze-delay        # Get current smt-snooze-delay setting
+ppc64_cpu --smt-snooze-delay=<val>  # Change smt-snooze-delay setting
+
+ppc64_cpu --run-mode                # Get current diagnostics run mode
+ppc64_cpu --run-mode=<val>          # Set current diagnostics run mode
+
+ppc64_cpu --frequency [-t <time>]   # Determine cpu frequency for <time>
+                                    # seconds, default is 1 second.
+
+ppc64_cpu --subcores-per-core       # Get number of subcores per core
+ppc64_cpu --subcores-per-core=X     # Set subcores per core to X (1 or 4)
+ppc64_cpu --threads-per-core        # Get threads per core
+ppc64_cpu --info                    # Display system state information)
+
+```
+
+The comparison scripts log the SMT state at the beginning of the
+compression tests.
+
+Currently the default on `p8.desy.de` is `smt==8` (and that status is
+reset on reboot). This produces 160 processors if you check `lscpu`,
+`/proc/cpuinfo`, `top`, `htop` or similar. With hyperthreading
+disabled (`smt=off`) there are 20 processors.
+
+
+### Number of threads
+
+The tests performed until December 2016 show that the FPGA accelerator
+can deliver compression rates approximately in the range [0.8, 1.1]
+GByte/s with a single thread.
+
+With multiple threads or processes approximately [1.6, 1.7] GB/s (half
+for each when using two threads). This is in agreement with slide 11
+of
+[`CAPI_GENWQE-GZIP_for_DESY.pdf`](docs/CAPI_GENWQE-GZIP_for_DESY.pdf),
+although slightly below the ideal performance, especially for XTC
+files with a low compression ratio.
+
+Two threads are enough to reach this performance in terms of
+throughput, and adding more threads does not seem to produce any
+increase in total throughput.
+
+
+### Buffer size
+
+The environment variables `ZLIB_IBUF_TOTAL` and `ZLIB_OBUF_TOTAL` can
+be used to control the sizes of the compression buffers used by the
+accelerator.  For low compresion ratio data throughput this option
+does not seem to help much even for very large buffer sizes (compare
+with slide 15 of
+[`CAPI_GENWQE-GZIP_for_DESY.pdf`](docs/CAPI_GENWQE-GZIP_for_DESY.pdf).
+The behavior with CAPI-enabled cards, for which this parameter seems
+more relevant, remains to be tested.
