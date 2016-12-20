@@ -216,21 +216,25 @@ class: `karabo::io::h5::File::createTable(const std::string&, const
 Format::Pointer)`. See an example in the file
 [H5File_Test.cc](H5File_Test.cc), modified from the `io` unit tests of
 Karabo, test
-[H5File_Test](https://git.xfel.eu/gitlab/Karabo/Framework/blob/master/src/karabo/tests/io/H5File_Test.cc)).
-Note again that the specific compression level is ignored/irrelevant
-when using the FPGA accelerator.
+[H5File_Test](https://git.xfel.eu/gitlab/Karabo/Framework/blob/master/src/karabo/tests/io/H5File_Test.cc)). This
+file also includes examples of how to measure elapsed time in the
+Karabo framework (`TimeProfiler` class).  Note again that the specific
+compression level is ignored/irrelevant when using the FPGA
+accelerator.
 
-Note that Karabo is not officially supported on the IBM Power
-platform. The dependencies of Karabo [are not
+Karabo is not officially supported on the IBM Power platform. The
+dependencies of Karabo [are not
 available](http://exflserv05.desy.de/karabo/karaboDevelopmentDeps/)
 and need to be compiled manually.
 
 * A Karabo package is available on p8.desy.de, under
   /home/common/karabo/Framework. This is a package built from sources
   ([Framework
-  repository](https://git.xfel.eu/gitlab/Karabo/Framework/). These
+  repository](https://git.xfel.eu/gitlab/Karabo/Framework/)). These
   sources include the required modifications to compile Karabo on
-  RHEL7/Power8.
+  RHEL7/Power8. A number of dependencies are updated to include more
+  recent `config.guess` and `config.sub` scripts needed for Power
+  machines.
 
 
 #### Python, h5py
