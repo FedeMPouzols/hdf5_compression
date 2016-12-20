@@ -192,7 +192,10 @@ Compression Adapter User's guide](docs/CAPI-GZIP-Usersguide.pdf).
 
 ### Other compression tools/algorithms (software implementations).
 
-Other alternatives, in particular the [lz4](https://github.com/lz4/lz4) compression algorithm software implementation are briefly explored [here]().
+Other alternatives, in particular the
+[lz4](https://github.com/lz4/lz4) compression algorithm software
+implementation are briefly explored
+[here](other_compression_algorithms.md).
 
 
 ### Compression filters in HDF5
@@ -337,37 +340,30 @@ This can be measured using Disk I/O, different forms of memory I/O, or
 a combination of them.
 
 
-## Repetitions
+### Multiple repetitions
+
+The script
+[run_repetitions_compression_tests.sh](compression_tests/run_repetitions_compression_tests.sh)
+is an example that can be used To run multiple repetitions of
+compression tests with multiple datasets. This can be used for example
+to run tests on all the available [CXIDB](http://cxidb.org) raw data
+files. This essentially runs a loop that uses the script
+[compare_compression_fpga.sh](compression_tests/compare_compression_fpga.sh)
+with a given list of files to compare and produces output text files:
 
 ```
-#repetitions 0-159: default SMT settings
-#repetitions 160-: `ppc64_cpu --smt=off`
-# Note: repetitions 160-187 were done with a karabo deviceserver holding over 130GB, disk->disk tests are very slow because of lack of RAM memory for buffering
-
-OUTPUT_DIR=~/genwqe_comparison_results_hw_repetitions
-i=160;
 while [[ i -le 1000 ]];
 do
   echo " *****************************************************************************************"
   echo " **************************** Starting repetition ${i} ***********************************"
   echo " *****************************************************************************************"
-  ./compare_compression_fpga.sh cxidb/id22 cxidb/id22/files_to_compare_id22.txt | tee ${OUTPUT_DIR}/compress_comparison_results_id22_rep.${i}.txt
-  ./compare_compression_fpga.sh cxidb/id30 cxidb/id30/files_to_compare_id30.txt | tee ${OUTPUT_DIR}/compress_comparison_results_id30_rep.${i}.txt
+  for dset in "${datasets[@]}"
+  do
+      ./compare_compression_fpga.sh ${DATA_ROOT}/cxidb/${dset} ${DATA_ROOT}/cxidb/${dset}/files_to_compare_${dset}.txt | tee ${OUTPUT_DIR}/compress_comparison_results_${dset}_rep.${i}.txt
+  done
   i=$((i+1));
 done;
 ```
-
-## Results and statistics
-
-The comparison scripts generate text files with a detailed log which
-also includes a section with numerical results (in csv format).  The
-comparison results and statistics about storage saving and compression
-speed can be parsed and processed like in the example script
-[`stats_compress_repetitions.py`](compression_tests/stats_compress_repetitions.py).
-These can be then collated, summarized and compared in a spreadsheet,
-as in the file
-[`compression_comparison_results_dec2016.ods`](compression_tests/compression_comparison_results_dec2016.ods).
-
 
 ### Multi-thread/process compression
 
@@ -392,6 +388,18 @@ processed simultaneously, see the following examples:
 ```
 
 
+## Results and statistics
+
+The comparison scripts generate text files with a detailed log which
+also includes a section with numerical results (in csv format).  The
+comparison results and statistics about storage saving and compression
+speed can be parsed and processed like in the example script
+[`stats_compress_repetitions.py`](compression_tests/stats_compress_repetitions.py).
+These can be then collated, summarized and compared in a spreadsheet,
+as in the file
+[`compression_comparison_results_dec2016.ods`](compression_tests/compression_comparison_results_dec2016.ods).
+
+
 ## Performance considerations
 
 ### CPU load
@@ -407,8 +415,8 @@ Screenshots [p8_screenshot_htop](p8_screenshot_htop.png) and
 [p8_screenshot_htop_2](p8_screenshot_htop_2.png)
 
 Note that an additional factor with a (lesser) influence on the
-compression ratio is the HDF (chunk
-size)[https://support.hdfgroup.org/HDF5/doc/Advanced/Chunking/]
+compression ratio is the HDF [chunk
+size][https://support.hdfgroup.org/HDF5/doc/Advanced/Chunking/]
 
 
 ### Power8 hyperthreading

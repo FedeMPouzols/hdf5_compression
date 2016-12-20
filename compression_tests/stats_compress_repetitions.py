@@ -47,7 +47,7 @@ def load_results_file(fname, fields_cnt):
         file_idx += 1
     return results
 
-# Define range of repetitions to grab
+# Define the range of repetitions to grab
 rep_start = 0
 max_reps = 160
 fields_cnt = 5
