@@ -7,10 +7,13 @@
 #  disk->disk tests are very slow because of lack of RAM memory for buffering
 # => repeated again with free memory
 
+# Repetitions 200/2??: with SMT off
+# Repetitions 400/4??: SMT on (8, default)
+
 DATA_ROOT=~/
 OUTPUT_DIR=~/genwqe_comparison_results_hw_repetitions
 
-i=200;
+i=400;
 
 declare -a datasets=(
     "id22" 

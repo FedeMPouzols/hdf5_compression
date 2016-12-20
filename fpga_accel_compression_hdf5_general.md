@@ -112,7 +112,7 @@ set it up and some performance considerations relevant to our
 application area.
 
 Comprehensive documentation for this product is available in the
-[User's guide from IBM](docs/CAPI-GZIP-Usersguide.pdf) which is made
+[CAPI accelerated GZIP Compression Adapter User's guide from IBM](docs/CAPI-GZIP-Usersguide.pdf) which is made
 available online on the [Linux on Power community
 website](https://www.ibm.com/developerworks/community/wikis/home?lang=en#!/wiki/W51a7ffcf4dfd_4b40_9d82_446ebc23c550/page/CAPI%20accelerated%20GZIP%20Compression%20Adapter%20User%E2%80%99s%20guide).
 
@@ -125,6 +125,11 @@ The software packages for [RHEL
 Power systems can be found in this list of [packages for
 RHEL7](http://public.dhe.ibm.com/software/server/POWER/Linux/yum/OSS/RHEL/7/ppc64le/). These
 packages are installed ion p8.desy.de.
+
+**TODO**
+
+* The data files downloaded are availble under p8.desy.de:/**TODO**.
+
 
 ### Using environment variables
 
@@ -146,10 +151,43 @@ level.
 
 ### Logs/trace from FPGA
 
-Use environment variable
+A trace with different levels of details is produced into the standard
+output when specifying the environment variable `ZLIB_TRACE`. For
+example:
 
-* Options: ZLIB_TRACE=0x08
+```
+ZLIB_TRACE=0x08 ZLIB_ACCELERATOR=GENWQE LD_PRELOAD=/usr/lib64/genwqe/libz.so.1 /usr/bin/time -f '%e %U %S' /usr/bin/genwqe_gzip < ramdisk_150GB/e239-r0028-s00-c00.xtc > ramdisk_150GB/e239-r0028-s00-c00.xtc.gz
+```
+Will produce a summary:
+```
+Info: deflateInit: 1
+Info: deflate: 1050139 sw: 0 hw: 1050139
+Info:   deflate_avail_in    4 KiB: 296443
+Info:   deflate_avail_in   40 KiB: 1
+Info:   deflate_avail_in  132 KiB: 753695
+Info:   deflate_avail_out  132 KiB: 1050139
+Info:   deflate_total_in 1024 KiB: 1
+Info:   deflate_total_out 1024 KiB: 1
+Info: deflateSetHeader: 1
+Info: deflateEnd: 1
+Info: inflateInit: 0
+Info: inflate: 0 sw: 0 hw: 0
+...
+```
 
+The level of detail of the output can be set with the value of the
+ZLIB_TRACE option, see section 5 - Application Enablement of the [CAPI
+accelerated GZIP Compression Adapter User's
+guide](docs/CAPI-GZIP-Usersguide.pdf). In particular `ZLIB_TRACE=0x08`
+will generate a very verbose deflate/compression log.
+
+
+### Using acceleration with custom code/tools
+
+For an example of custom compression tool implemented in C see [code
+of the zlib example](http://www.zlib.net/zlib_how.html)), or section
+4.3 Zpipe - Example zlib application of the [CAPI accelerated GZIP
+Compression Adapter User's guide](docs/CAPI-GZIP-Usersguide.pdf).
 
 ### Other compression tools/algorithms (software implementations).
 
@@ -363,20 +401,48 @@ This is used in the command line for example like this:
 $ ZLIB_ACCELERATOR=GENWQE LD_PRELOAD=/usr/lib64/genwqe/libz.so.1 ./binary
 ```
 
-* Raw files
+The script
+[compare_compression_fpga.sh](compression_tests/compare_compression_fpga.sh)
+which can be used for example like this for raw XTC files:
+
+```
 ./compare_compression_fpga.sh cxidb/id22 cxidb/id22/files_to_compare_id22.txt |tee compress_comparison_results_id22.txt
 ./compare_compression_fpga.sh cxidb/id30 cxidb/id30/files_to_compare_id30.txt |tee compress_comparison_results_id30.txt
+```
 
-* CXI data file:
+Or also for HDF5 files, including CXI files:
+```
 ./compare_compression_fpga.sh cxidb/id30 cxidb/id30/data_files_to_compare_cxi.txt | tee compress_comparison_data_cxi_results_id30.txt
+```
 
-
-
-* example commands:
+This script runs commands using the environment variable approach, like for example:
 ```
 $ ZLIB_ACCELERATOR=GENWQE LD_PRELOAD=/usr/lib64/genwqe/libz.so.1 /usr/bin/time -f '%e %U %S' /usr/bin/genwqe_gzip < ramdisk_150GB/e239-r0028-s00-c00.xtc > ramdisk_150GB/e239-r0028-s00-c00.xtc.gz
 ```
 
+
+### Comparison criteria
+
+The scripts report a number of results and statistics. Among these,
+performance can be summarized in terms of space saving and speed of
+compression using the two following metrics:
+
+* Space saving, defined as
+
+```
+space_saving = 1 – 1/comp_ratio
+```
+where the [data compression ratio](https://en.wikipedia.org/wiki/Data_compression_ratio), `comp_ratio` is:
+```
+comp_ratio =  uncompressed_size / compressed_size
+```
+
+* Data compression rate (speed), measured as the total size of the
+  uncompressed file divided by the time required to produced a
+  compressed stream or file. 
+
+This can be measured using Disk I/O, different forms of memory I/O, or
+a combination of them.
 
 
 ## Repetitions
@@ -399,24 +465,37 @@ do
 done;
 ```
 
-* multi-thread/process:
- ~4.5 GB - cxidb/id22/e239-r0027-s00-c00.xtc
-```
-/usr/bin/time -f '%e %U %S' /usr/lib64/genwqe/gzip   < cxidb/id22/e239-r0027-s00-c00.xtc > ~/ramdisk_150GB/comp.gz & /usr/bin/time -f '%e %U %S' /usr/lib64/genwqe/gzip  < cxidb/id22/e239-r0027-s01-c00.xtc > ~/ramdisk_150GB/comp2.gz &
-```
+## Results and statistics
 
-* ~95 GB - cxidb/id22/e239-r0028-s00-c00.xtc
+The comparison scripts generate text files with a detailed log which
+also includes a section with numerical results (in csv format).  The
+comparison results and statistics about storage saving and compression
+speed can be parsed and processed like in the example script
+[`stats_compress_repetitions.py`](compression_tests/stats_compress_repetitions.py).
+These can be then collated, summarized and compared in a spreadsheet,
+as in the file
+[`compression_comparison_results_dec2016.ods`](compression_tests/compression_comparison_results_dec2016.ods).
+
+
+### Multi-thread/process compression
+
+The FPGA accelerator support multi-thread applications and multiple
+simultaneous processed. 
+
+The performance with multiple thread can be evaluated as in the the
+genwqe [mt performance
+tests](https://github.com/ibm-genwqe/genwqe-user/wiki/Explore%20performance%20with%20genwqe_mt_perf),
+with different files, or in the simplest setup starting multiple
+processed simultaneously, see the following examples:
+
 ```
+# multi-thread/process, ~4.5 GB - cxidb/id22/e239-r0027-s00-c00.xtc
+/usr/bin/time -f '%e %U %S' /usr/lib64/genwqe/gzip   < cxidb/id22/e239-r0027-s00-c00.xtc > ~/ramdisk_150GB/comp.gz & /usr/bin/time -f '%e %U %S' /usr/lib64/genwqe/gzip  < cxidb/id22/e239-r0027-s01-c00.xtc > ~/ramdisk_150GB/comp2.gz &
+
+#  ~95 GB - cxidb/id22/e239-r0028-s00-c00.xtc
 /usr/bin/time -f '%e %U %S' /usr/lib64/genwqe/gzip   < cxidb/id22/e239-r0028-s00-c00.xtc > ~/ramdisk_150GB/comp.gz & /usr/bin/time -f '%e %U %S' /usr/lib64/genwqe/gzip  < cxidb/id22/e239-r0028-s00-c00.xtc > ~/ramdisk_150GB/comp2.gz &
 ```
-
-* ~56 GB - cxidb/id22/e239-r0028-s00-c01.xtc
-```
+# ~56 GB - cxidb/id22/e239-r0028-s00-c01.xtc
 /usr/bin/time -f '%e %U %S' /usr/lib64/genwqe/gzip   < cxidb/id22/e239-r0028-s00-c01.xtc > ~/ramdisk_150GB/comp.gz & /usr/bin/time -f '%e %U %S' /usr/lib64/genwqe/gzip  < cxidb/id22/e239-r0028-s00-c01.xtc > ~/ramdisk_150GB/comp2.gz &
 ```
 
-statistics like in the example script `stats_compress_repetitions.py`.
-
-
-these can be then collated, summarized and compared in a spreadsheet,
-as in the file `compression_comparison_results_tmp.ods`.
