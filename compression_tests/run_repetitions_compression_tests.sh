@@ -10,10 +10,10 @@
 # Repetitions 200/2??: with SMT off
 # Repetitions 400/4??: SMT on (8, default)
 
-DATA_ROOT=~/
-OUTPUT_DIR=~/genwqe_comparison_results_hw_repetitions
+DATA_ROOT=/home/common
+OUTPUT_DIR=/home/common/fpga_tests_output/genwqe_comparison_results_hw_repetitions
 
-i=400;
+i=402;
 
 declare -a datasets=(
     "id22" 

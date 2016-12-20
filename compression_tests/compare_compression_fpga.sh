@@ -11,8 +11,8 @@ GZIP_BIN=/usr/lib64/genwqe/gzip
 
 TIMEIT_BIN=/usr/bin/time
 
-RAM_DISK_MPOINT=/home/fedemp/
-RAM_DISK=${RAM_DISK_MPOINT}ramdisk_150GB
+RAM_DISK_MPOINT=/home/common
+RAM_DISK=${RAM_DISK_MPOINT}/ramdisk_150GB
 
 
 gzip_disk_disk() {

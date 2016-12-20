@@ -21,9 +21,10 @@ repositories](https://git.xfel.eu/gitlab/Karabo/)
 
 * Familiarity with the IBM FPGA accelerator for GZIP compression, see
 for example this [presentation for
-DESY](CAPI_GENWQE-GZIP_for_DESY.pdf), and additional documents below
+DESY](CAPI_GENWQE-GZIP_for_DESY.pdf), and additional documents and
+links given below
 
-## Conclusions from tests before Jan 2017.
+## Conclusions from tests run before January 2017.
 
 Test results performed primarily on XTC files from the
 [LCLS](https://lcls.slac.stanford.edu) were presented and discussed
@@ -102,7 +103,7 @@ p8.desy.de. This device can produce HDF5 files from some of the of the
 CXIDB raw data XTC files.
 
 
-## Using the GenWQE/PCIe Accelerator
+## Using the GenWQE/PCIe accelerator
 
 This accelerator implements the standard [DEFLATE
 algorithm](http://www.zlib.net/feldspar.html) and is a drop-in
@@ -126,10 +127,8 @@ Power systems can be found in this list of [packages for
 RHEL7](http://public.dhe.ibm.com/software/server/POWER/Linux/yum/OSS/RHEL/7/ppc64le/). These
 packages are installed ion p8.desy.de.
 
-**TODO**
-
 * The data files downloaded from the [CXIDB](http://cxidb.org) are
-  availble under p8.desy.de:/**TODO**.
+  availble under `p8.desy.de:/home/common/cxidb`
 
 
 ### Using environment variables
@@ -226,11 +225,13 @@ platform. The dependencies of Karabo [are not
 available](http://exflserv05.desy.de/karabo/karaboDevelopmentDeps/)
 and need to be compiled manually.
 
-**TODO**
+* A Karabo package is available on p8.desy.de, under
+  /home/common/karabo/Framework. This is a package built from sources
+  ([Framework
+  repository](https://git.xfel.eu/gitlab/Karabo/Framework/). These
+  sources include the required modifications to compile Karabo on
+  RHEL7/Power8.
 
-* A Karabo package is available on p8.desy.de, under XXX.
-
-* Karabo compilation patch: XXX.
 
 #### Python, h5py
 
@@ -293,7 +294,7 @@ For CAPI-enabled cards the alternative option is `ZLIB_ACCELERATOR=CAPI`.
 
 This is used in the command line for example like this:
 ```
-$ ZLIB_ACCELERATOR=GENWQE LD_PRELOAD=/usr/lib64/genwqe/libz.so.1 ./binary
+ZLIB_ACCELERATOR=GENWQE LD_PRELOAD=/usr/lib64/genwqe/libz.so.1 ./binary
 ```
 
 The script
@@ -312,7 +313,7 @@ Or also for HDF5 files, including CXI files:
 
 This script runs commands using the environment variable approach, like for example:
 ```
-$ ZLIB_ACCELERATOR=GENWQE LD_PRELOAD=/usr/lib64/genwqe/libz.so.1 /usr/bin/time -f '%e %U %S' /usr/bin/genwqe_gzip < ramdisk_150GB/e239-r0028-s00-c00.xtc > ramdisk_150GB/e239-r0028-s00-c00.xtc.gz
+ZLIB_ACCELERATOR=GENWQE LD_PRELOAD=/usr/lib64/genwqe/libz.so.1 /usr/bin/time -f '%e %U %S' /usr/bin/genwqe_gzip < ramdisk_150GB/e239-r0028-s00-c00.xtc > ramdisk_150GB/e239-r0028-s00-c00.xtc.gz
 ```
 
 
@@ -364,6 +365,15 @@ do
   i=$((i+1));
 done;
 ```
+
+A collection of test results is available on p8 under
+`/home/common/fpga_tests_output`
+
+These were used to produce some of the results shown in
+[slides_compression_gzip_fpga_evaluation_ibm_workshop](docs/slides_compression_gzip_fpga_evaluation_ibm_workshop.pdf),
+[`compression_comparison_results_dec2016.ods`](compression_tests/compression_comparison_results_dec2016.ods)
+and other documents.
+
 
 ### Multi-thread/process compression
 
