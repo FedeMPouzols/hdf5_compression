@@ -63,23 +63,68 @@ compressible patterns).
   it fast enough that will not produce a bottleneck for processes
   writing files at a rate of the order of a GB/s?
 
+## Experimental datasets
+
+Dr. Adrian Mancuso suggested three types of datasets:
+
+* Sequential crystallography
+* Not-so-weakly scattering
+* Weakly scattering 
+
+Raw data for these types of experiments can be retrieved from the
+[Coherent X-ray Imaging Data Bank, CXIDB](http://cxidb.org).
+
+The test raw files used as of December 2016 correspond to two datasets:
+
+* [Dataset CXIDB 22](http://cxidb.org/id-22.html) - for sequential
+  crystallography, beamline CXI of the LCLS.
+* [Dataset CXIDB 30](http://cxidb.org/id-30.html) - for Not-so-weakly
+  scattering, beamline AMO of the LCLS.
+
+Further data for the weakly scattering type of experiment can be
+provided by instrument scientists in the future. Some of the raw data
+files analyzed for which the storage saving can be >90% were acquired
+with the CSPad (Cornell-SLAC Pixel Array Detector) at LCLS. Details on
+how the experiments are performed and the resulting data deposited on
+the CXIDB can be found in White et al. (2016).
+
+
+[WhiteEtAl206](http://www.nature.com/articles/sdata201657?WT.feed_name=subjects_physical-sciences)
+White et al. 2016. Serial femtosecond crystallography datasets from G
+protein-coupled receptors. Scientific Data 3, Article number:
+160057. doi: 10.1038/sdata.2016.57.
+
+The raw data files are provided in [XTC
+format](https://confluence.slac.stanford.edu/display/PSDM/The+XTC+to+HDF5+Translator).
+Djelloul can provide further details about this format, and explain
+the use of the Karabo device `xtcConverter` which is available on
+p8.desy.de. This device can produce HDF5 files from some of the of the
+CXIDB raw data XTC files.
+
+
 ## Using the GenWQE/PCIe Accelerator
 
 This accelerator implements the standard [DEFLATE
 algorithm](http://www.zlib.net/feldspar.html) and is a drop-in
 replacement for the common software implementation via dynamic
-linking.
+linking. The next sections highlight some important points on how to
+set it up and some performance considerations relevant to our
+application area.
 
-Documentation in the [User's guide from
-IBM](docs/CAPI-GZIP-Usersguide.pdf) which is made available online on
-the [Linux on Power community
+Comprehensive documentation for this product is available in the
+[User's guide from IBM](docs/CAPI-GZIP-Usersguide.pdf) which is made
+available online on the [Linux on Power community
 website](https://www.ibm.com/developerworks/community/wikis/home?lang=en#!/wiki/W51a7ffcf4dfd_4b40_9d82_446ebc23c550/page/CAPI%20accelerated%20GZIP%20Compression%20Adapter%20User%E2%80%99s%20guide).
 
-Software [project genwqe-user on
+The software, user tools and library, are open source and available as
+[project genwqe-user on
 GitHub](https://github.com/ibm-genwqe/genwqe-user).
 
-Software [packages for
-RHEL7](http://public.dhe.ibm.com/software/server/POWER/Linux/yum/OSS/RHEL/7/ppc64le/).
+The software packages for [RHEL
+7](https://access.redhat.com/products/red-hat-enterprise-linux) on
+Power systems can be found in this list of [packages for
+RHEL7](http://public.dhe.ibm.com/software/server/POWER/Linux/yum/OSS/RHEL/7/ppc64le/). These
+packages are installed ion p8.desy.de.
 
 ### Using environment variables
 
@@ -104,6 +149,100 @@ level.
 Use environment variable
 
 * Options: ZLIB_TRACE=0x08
+
+
+### Other compression tools/algorithms (software implementations).
+
+Other alternatives, in particular the [lz4](https://github.com/lz4/lz4) compression algorithm software implementation are briefly explored [here]().
+
+
+### Compression filters in HDF5
+
+[Compression
+filters](http://docs.h5py.org/en/latest/high/dataset.html#filter-pipeline)
+enable compression when writing datasets in HDF5 files via the HDF5
+library. Several lossless compression methods are supported, and
+additional plugins are available. Here we are interested in the *GZIP
+filter*.
+
+#### Karabo HDF5 API
+
+When using the Karabo HDF5 API, HDF5 compression can be enabled by
+using the method `karabo::io::h5::Element::setCompressionLevel(int)` ,
+or just by setting the `compressionLevel` option in the data format
+parameter passed to the method `createTable()` of the HDF5 `File`
+class: `karabo::io::h5::File::createTable(const std::string&, const
+Format::Pointer)`. See an example in the file
+[H5File_Test.cc](H5File_Test.cc), modified from the `io` unit tests of
+Karabo, test
+[H5File_Test](https://git.xfel.eu/gitlab/Karabo/Framework/blob/master/src/karabo/tests/io/H5File_Test.cc)).
+Note again that the specific compression level is ignored/irrelevant
+when using the FPGA accelerator.
+
+Note that Karabo is not officially supported on the IBM Power
+platform. The dependencies of Karabo [are not
+available](http://exflserv05.desy.de/karabo/karaboDevelopmentDeps/)
+and need to be compiled manually.
+
+**TODO**
+
+* A Karabo package is available on p8.desy.de, under XXX.
+
+* Karabo compilation patch: XXX.
+
+#### Python, h5py
+
+An example of HDF5 compression can be found in
+[`compress_hdf5_in2out.py`](compress_hdf5_in2out.py). 
+
+An example of manipulation of HDF5 files is in
+check_compressed_xtc_converter_h5_files.py
+
+Both examples use the widespread [h5py
+package](http://docs.h5py.org/en/latest/high/dataset.html#filter-pipeline).
+
+#### Inspecting the data (images) in HDF5 files converted from XTC/LCLS raw data files
+
+[`example_plot_hdf5_xtc_lcls.py`](example_plot_hdf5_xtc_lcls.py)
+
+#### Data in CXI (HDF5) files
+
+For [Dataset CXIDB 30](http://cxidb.org/id-30.html), in addition to
+the raw data files, a "Diffraction Pattern" file is provided. This
+file is in [CXI format](http://cxidb.org/cxi.html) which is HDF5,
+following the [NeXus](http://www.nexusformat.org/) approach and
+partially compatible with NeXus. This type of file can be inspected
+with standard HDF5 tools, such as
+[HDFView](https://support.hdfgroup.org/products/java/hdfview/) or [HDF
+Explorer](https://github.com/pedro-vicente/hdf-explorer), or with
+scripts like the example_plot_hdf5_xtc_lcls.py example given
+above. 
+
+This file can be compressed with the example script
+compress_hdf5_in2out.py given above, similarly as the HDF5 files
+converted from raw data XTC files. The compression ratio for this CXI
+file is ~12.0 with standard software GZIP, and ~7.15 with accelerated
+compression. Note that the file contains easily compressible
+information such as image masks.
+
+## Performance considerations
+
+### CPU load
+
+A concern, especially with non-CAPI FPGA accelerators, is that the CPU
+load could be high for some datasets, compromising the performance or
+throughput of the accelerator. In principle , in the tests provided
+with the [genwqe-user
+software](https://github.com/ibm-genwqe/genwqe-user) or the tests done
+with [CXIDB](http://cxidb.org) raw data files.
+
+Screenshots [p8_screenshot_htop](p8_screenshot_htop.png) and
+[p8_screenshot_htop_2](p8_screenshot_htop_2.png)
+
+Note that an additional factor with a (lesser) influence on the
+compression ratio is the HDF (chunk
+size)[https://support.hdfgroup.org/HDF5/doc/Advanced/Chunking/]
+
 
 ### Power8 hyperthreading
 
@@ -178,134 +317,6 @@ Options:
 For more details see setarch(8).
 
 ```
-
-
-### Other compression tools/algorithms (software implementations).
-
-Other alternatives, in particular the [lz4](https://github.com/lz4/lz4) compression algorithm software implementation are briefly explored [here]().
-
-
-## Experimental datasets
-
-Dr. Adrian Mancuso suggested three types of datasets:
-
-* Sequential crystallography
-* Not-so-weakly scattering
-* Weakly scattering 
-
-Raw data for these types of experiments can be retrieved from the
-[Coherent X-ray Imaging Data Bank, CXIDB](http://cxidb.org).
-
-The test raw files used as of December 2016 correspond to two datasets:
-
-* [Dataset CXIDB 22](http://cxidb.org/id-22.html) - for sequential
-  crystallography, beamline CXI of the LCLS.
-* [Dataset CXIDB 30](http://cxidb.org/id-30.html) - for Not-so-weakly
-  scattering, beamline AMO of the LCLS.
-
-Further data for the weakly scattering type of experiment can be
-provided by instrument scientists in the future. Some of the raw data
-files analyzed for which the storage saving can be >90% were acquired
-with the CSPad (Cornell-SLAC Pixel Array Detector) at LCLS. Details on
-how the experiments are performed and the resulting data deposited on
-the CXIDB can be found in White et al. (2016).
-
-
-[WhiteEtAl206](http://www.nature.com/articles/sdata201657?WT.feed_name=subjects_physical-sciences)
-White et al. 2016. Serial femtosecond crystallography datasets from G
-protein-coupled receptors. Scientific Data 3, Article number:
-160057. doi: 10.1038/sdata.2016.57.
-
-The raw data files are provided in [XTC
-format](https://confluence.slac.stanford.edu/display/PSDM/The+XTC+to+HDF5+Translator).
-Djelloul can provide further details about this format, and explain
-the use of the Karabo device `xtcConverter` which is available on
-p8.desy.de. This device can produce HDF5 files from some of the of the
-CXIDB raw data XTC files.
-
-
-### Compression filters in HDF5
-
-[Compression
-filters](http://docs.h5py.org/en/latest/high/dataset.html#filter-pipeline)
-enable compression when writing datasets in HDF5 files via the HDF5
-library. Several lossless compression methods are supported, and
-additional plugins are available. Here we are interested in the *GZIP
-filter*.
-
-#### Karabo HDF5 API
-
-When using the Karabo HDF5 API, HDF5 compression can be enabled by
-using the method `karabo::io::h5::Element::setCompressionLevel(int)` ,
-or just by setting the `compressionLevel` option in the data format
-parameter passed to the method `createTable()` of the HDF5 `File`
-class: `karabo::io::h5::File::createTable(const std::string&, const
-Format::Pointer)`. See an example in the file
-[H5File_Test.cc](H5File_Test.cc), modified from the `io` unit tests of
-Karabo, test
-[H5File_Test](https://git.xfel.eu/gitlab/Karabo/Framework/blob/master/src/karabo/tests/io/H5File_Test.cc)).
-Note again that the specific compression level is ignored/irrelevant
-when using the FPGA accelerator.
-
-Note that Karabo is not officially supported on the IBM Power
-platform. The dependencies of Karabo [are not
-available](http://exflserv05.desy.de/karabo/karaboDevelopmentDeps/)
-and need to be compiled manually.
-
-**TODO**
-
-* A Karabo package is available on p8.desy.de, under XXX.
-
-* Karabo compilation patch: XXX.
-
-#### Python, h5py
-
-An example of HDF5 compression can be found in
-[`compress_hdf5_in2out.py`](compress_hdf5_in2out.py). 
-
-An example of manipulation of HDF5 files is in
-check_compressed_xtc_converter_h5_files.py
-
-Both examples use the widespread [h5py
-package](http://docs.h5py.org/en/latest/high/dataset.html#filter-pipeline).
-
-#### Inspecting the data (images) in HDF5 files converted from XTC/LCLS raw data files
-
-[`example_plot_hdf5_xtc_lcls.py`](example_plot_hdf5_xtc_lcls.py)
-
-#### Data in CXI (HDF5) files
-
-For [Dataset CXIDB 30](http://cxidb.org/id-30.html), in addition to
-the raw data files, a "Diffraction Pattern" file is provided. This
-file is in [CXI format](http://cxidb.org/cxi.html) which is HDF5,
-following the [NeXus](http://www.nexusformat.org/) approach and
-partially compatible with NeXus. This type of file can be inspected
-with standard HDF5 tools, such as
-[HDFView](https://support.hdfgroup.org/products/java/hdfview/) or [HDF
-Explorer](https://github.com/pedro-vicente/hdf-explorer), or with
-scripts like the example_plot_hdf5_xtc_lcls.py example given
-above. The compression ratio for this file is ~12.0 with standard
-software GZIP, and ~7.15 with accelerated compression. Note that the
-file contains easily compressible information such as image masks.
-
-## Performance
-
-### CPU load
-
-A concern, especially with non-CAPI FPGA accelerators, is that the CPU
-load could be high for some datasets, compromising the performance or
-throughput of the accelerator. In principle , in the tests provided
-with the [genwqe-user
-software](https://github.com/ibm-genwqe/genwqe-user) or the tests done
-with [CXIDB](http://cxidb.org) raw data files.
-
-Screenshots [p8_screenshot_htop](p8_screenshot_htop.png) and
-[p8_screenshot_htop_2](p8_screenshot_htop_2.png)
-
-Note that an additional factor with a (lesser) influence on the
-compression ratio is the HDF (chunk
-size)[https://support.hdfgroup.org/HDF5/doc/Advanced/Chunking/]
-
 
 ### Number of threads
 
