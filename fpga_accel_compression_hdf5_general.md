@@ -1,14 +1,14 @@
 
-Tests of the GenWQE/PCIe Accelerator for the European XFEL
+#Tests of the GenWQE/PCIe Accelerator for the European XFEL
 
-# Summary
+## Summary
 
 This document gives an overview of the tests done for the evaluation
 of the GenWQE PFGA accelerator as part of the data management system
 of the European XFEL. It also provides examples, links and comments to
 reproduce these tests and perform future tests.
 
-## Prerequisites
+### Prerequisites
 
 * Access to the test machine p8.desy.de
 
@@ -16,14 +16,14 @@ reproduce these tests and perform future tests.
 repositories](https://git.xfel.eu/gitlab/Karabo/)
 
 * Familiarity with the Eu.XFEL ITDM setup. Useful resources include:
-- Slides for the ITDM advisory committee, December 2016
-- Slides for Karabo 2.0 workshop, 19th December 2016
+  - Slides for the ITDM advisory committee, December 2016
+  - Slides for Karabo 2.0 workshop, 19th December 2016
 
 * Familiarity with the IBM FPGA accelerator for GZIP compression, see
 for example this [presentation for
 DESY](CAPI_GENWQE-GZIP_for_DESY.pdf), and additional documents below
 
-# Conclusions from tests before Jan 2017.
+## Conclusions from tests before Jan 2017.
 
 Test results performed primarily on XTC files from the
 [LCLS](https://lcls.slac.stanford.edu) were presented and discussed
@@ -52,7 +52,7 @@ extent to which Eu.XFEL sensors produce similarly compressible
 patterns (or the raw sensor data can be processed to produce similarly
 compressible patterns).
 
-# Next points to evaluate
+## Next points to evaluate
 
 - Images from Eu.XFEL sensors, what they look like and what
   compression ratios are possible. This should shed some light on
@@ -63,7 +63,7 @@ compressible patterns).
   it fast enough that will not produce a bottleneck for processes
   writing files at a rate of the order of a GB/s?
 
-# Using the GenWQE/PCIe Accelerator
+## Using the GenWQE/PCIe Accelerator
 
 This accelerator implements the standard [DEFLATE
 algorithm](http://www.zlib.net/feldspar.html) and is a drop-in
@@ -81,7 +81,7 @@ GitHub](https://github.com/ibm-genwqe/genwqe-user).
 Software [packages for
 RHEL7](http://public.dhe.ibm.com/software/server/POWER/Linux/yum/OSS/RHEL/7/ppc64le/).
 
-## Using environment variables
+### Using environment variables
 
 Example commands to run shell processes with FPGA acceleration:
 
@@ -99,13 +99,13 @@ Note that when using the FPGA accelerator the compression level
 parameter will be ignored, as the FPGA implements only one variant or
 level.
 
-## Logs/trace from FPGA
+### Logs/trace from FPGA
 
 Use environment variable
 
 * Options: ZLIB_TRACE=0x08
 
-## Power8 hyperthreading
+### Power8 hyperthreading
 
 The tool `ppc64_cpu` to setup Simultaneous multithreading (SMT) /
 Hyperthreading. Power8 has SMT 8 per core.
@@ -180,12 +180,12 @@ For more details see setarch(8).
 ```
 
 
-## Other compression tools/algorithms (software implementations).
+### Other compression tools/algorithms (software implementations).
 
 Other alternatives, in particular the [lz4](https://github.com/lz4/lz4) compression algorithm software implementation are briefly explored [here]().
 
 
-# Experimental datasets
+## Experimental datasets
 
 Dr. Adrian Mancuso suggested three types of datasets:
 
@@ -224,7 +224,7 @@ p8.desy.de. This device can produce HDF5 files from some of the of the
 CXIDB raw data XTC files.
 
 
-## Compression filters in HDF5
+### Compression filters in HDF5
 
 [Compression
 filters](http://docs.h5py.org/en/latest/high/dataset.html#filter-pipeline)
@@ -233,7 +233,7 @@ library. Several lossless compression methods are supported, and
 additional plugins are available. Here we are interested in the *GZIP
 filter*.
 
-### Karabo HDF5 API
+#### Karabo HDF5 API
 
 When using the Karabo HDF5 API, HDF5 compression can be enabled by
 using the method `karabo::io::h5::Element::setCompressionLevel(int)` ,
@@ -253,10 +253,12 @@ available](http://exflserv05.desy.de/karabo/karaboDevelopmentDeps/)
 and need to be compiled manually.
 
 **TODO**
-A Karabo package is available on p8.desy.de, under XXX.
-Karabo compilation patch: XXX.
 
-### Python, h5py
+* A Karabo package is available on p8.desy.de, under XXX.
+
+* Karabo compilation patch: XXX.
+
+#### Python, h5py
 
 An example of HDF5 compression can be found in
 [`compress_hdf5_in2out.py`](compress_hdf5_in2out.py). 
@@ -267,11 +269,11 @@ check_compressed_xtc_converter_h5_files.py
 Both examples use the widespread [h5py
 package](http://docs.h5py.org/en/latest/high/dataset.html#filter-pipeline).
 
-### Inspecting the data (images) in HDF5 files converted from XTC/LCLS raw data files
+#### Inspecting the data (images) in HDF5 files converted from XTC/LCLS raw data files
 
 [`example_plot_hdf5_xtc_lcls.py`](example_plot_hdf5_xtc_lcls.py)
 
-### Data in CXI (HDF5) files
+#### Data in CXI (HDF5) files
 
 For [Dataset CXIDB 30](http://cxidb.org/id-30.html), in addition to
 the raw data files, a "Diffraction Pattern" file is provided. This
@@ -286,9 +288,9 @@ above. The compression ratio for this file is ~12.0 with standard
 software GZIP, and ~7.15 with accelerated compression. Note that the
 file contains easily compressible information such as image masks.
 
-# Performance
+## Performance
 
-## CPU load
+### CPU load
 
 A concern, especially with non-CAPI FPGA accelerators, is that the CPU
 load could be high for some datasets, compromising the performance or
@@ -305,7 +307,7 @@ compression ratio is the HDF (chunk
 size)[https://support.hdfgroup.org/HDF5/doc/Advanced/Chunking/]
 
 
-## Number of threads
+### Number of threads
 
 Approximately in the range [0.8, 1.1] GByte/s with a single thread.
 
@@ -318,7 +320,7 @@ In agreement with slide 11 of CAPI_GENWQE-GZIP_for_DESY.pdf, although
 with some performance degradation especially for XTC files with a low
 compression ratio.
 
-## Buffer size
+### Buffer size
 
 For low compresion ratio data throughput does not seem to increase
 much even for very large buffer sizes
@@ -327,7 +329,7 @@ much even for very large buffer sizes
 
 The behavior with CAPI remains to be tested.
 
-# Running tests
+## Running tests
 
 Can be run using the [gzip tool distributed with
 GenWQE](https://github.com/ibm-genwqe/genwqe-user/tree/master/tools)
@@ -359,19 +361,20 @@ $ ZLIB_ACCELERATOR=GENWQE LD_PRELOAD=/usr/lib64/genwqe/libz.so.1 ./binary
 
 
 
-# example commands:
-# ZLIB_ACCELERATOR=GENWQE LD_PRELOAD=/usr/lib64/genwqe/libz.so.1 /usr/bin/time -f '%e %U %S' /usr/bin/genwqe_gzip < ramdisk_150GB/e239-r0028-s00-c00.xtc > ramdisk_150GB/e239-r0028-s00-c00.xtc.gz
-# 
+* example commands:
+```
+$ ZLIB_ACCELERATOR=GENWQE LD_PRELOAD=/usr/lib64/genwqe/libz.so.1 /usr/bin/time -f '%e %U %S' /usr/bin/genwqe_gzip < ramdisk_150GB/e239-r0028-s00-c00.xtc > ramdisk_150GB/e239-r0028-s00-c00.xtc.gz
+```
 
 
 
-# Repetitions
-
-# repetitions 0-159: default SMT settings
-# repetitions 160-: `ppc64_cpu --smt=off`
-# Note: repetitions 160-187 were done with a karabo deviceserver holding over 130GB, disk->disk tests are very slow because of lack of RAM memory for buffering
+## Repetitions
 
 ```
+#repetitions 0-159: default SMT settings
+#repetitions 160-: `ppc64_cpu --smt=off`
+# Note: repetitions 160-187 were done with a karabo deviceserver holding over 130GB, disk->disk tests are very slow because of lack of RAM memory for buffering
+
 OUTPUT_DIR=~/genwqe_comparison_results_hw_repetitions
 i=160;
 while [[ i -le 1000 ]];
